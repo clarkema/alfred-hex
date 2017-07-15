@@ -26,10 +26,12 @@ def format_results(results)
     results.map { |r|
         name       = r["name"]
         human_url  = r["url"].sub(%r{/api}, '')
-        github_url = r["meta"]["links"]["Github"] ||
-                     r["meta"]["links"]["GitHub"]
         doc_url    = "https://hexdocs.pm/#{name}"
         mix_dep    = mix_dep(name, r["releases"])
+
+        # If we don't have a github link, going to hex.pm is better than
+        # failing out
+        github_url = find_github_link(r["meta"]["links"]) || human_url
 
         {
             title: name,
@@ -54,6 +56,16 @@ def format_results(results)
             }
         }
     }
+end
+
+def find_github_link(links)
+    if links
+        links.each { |k,v|
+            return v if k.match(/github/i)
+        }
+    end
+
+    return nil
 end
 
 def mix_dep(name, res)
